@@ -601,3 +601,161 @@ docker compose exec php php -d pcov.enabled=1 vendor/bin/phpunit \
   --coverage-html coverage-html/ \
   --min-coverage=70
 ```
+
+---
+
+## Mutation Testing avec Infection
+
+Le mutation testing va plus loin que la couverture de code : il **modifie le code source** (mutations) et vérifie que les tests détectent ces modifications. Un test qui ne détecte pas la mutation est inutile, même s'il couvre la ligne.
+
+**Exemples de mutations appliquées automatiquement :**
+- `>` → `>=` ou `<`
+- `true` → `false`
+- `+` → `-`
+- `return $value` → `return null`
+- Supprimer un `if` entier
+
+Un **MSI (Mutation Score Indicator) > 70%** signifie que les tests sont réellement efficaces.
+
+### Installation
+
+```bash
+composer require --dev infection/infection
+```
+
+### Configuration `infection.json5`
+
+```json5
+// infection.json5 (à la racine du projet)
+{
+  "source": {
+    "directories": ["web/modules/custom"],
+    "excludes": [
+      "web/modules/custom/*/tests",
+      "web/modules/custom/*/node_modules"
+    ]
+  },
+  "testFramework": "phpunit",
+  "phpUnit": {
+    "configDir": "."
+  },
+  "minMsi": 70,
+  "minCoveredMsi": 80,
+  "threads": 4,
+  "logs": {
+    "text": "infection.log",
+    "html": "infection.html",
+    "json": "infection-report.json"
+  }
+}
+```
+
+### Lancer Infection
+
+```bash
+# Analyse complète — avec seuils MSI
+docker compose exec php vendor/bin/infection --min-msi=70 --min-covered-msi=80
+
+# Verbose — voir chaque mutation appliquée
+docker compose exec php vendor/bin/infection --min-msi=70 --show-mutations
+
+# Sur un seul module
+docker compose exec php vendor/bin/infection \
+  --min-msi=70 \
+  --filter=web/modules/custom/mon_module/src
+
+# Avec 4 threads en parallèle (plus rapide)
+docker compose exec php vendor/bin/infection --min-msi=70 --threads=4
+```
+
+### Résultats typiques
+
+```
+Infection — PHP Mutation Testing Framework
+==========================================
+Running initial test suite...
+
+PHPUnit version: 10.5.x
+Tests: 42, Assertions: 187, Time: 1.23s
+
+Killed mutants:    156 / 220  (70.9%)
+Escaped mutants:    48 / 220  (21.8%)
+Timed out:           8 / 220   (3.6%)
+Not covered:         8 / 220   (3.6%)
+
+MSI:              70.9%   ← Mutation Score Indicator (seuil: 70%)
+Covered MSI:      85.2%   ← MSI sur les lignes couvertes (seuil: 80%)
+
+✅ The min MSI of 70% was reached.
+✅ The min covered MSI of 80% was reached.
+```
+
+### Interpréter les résultats
+
+| Terme | Signification | Action |
+|-------|--------------|--------|
+| **Killed** | La mutation a fait échouer un test | Bon signe — test efficace |
+| **Escaped** | La mutation n'a pas été détectée | Écrire un test plus précis |
+| **Timed out** | La mutation a causé une boucle infinie | Normal, compté comme tué |
+| **Not covered** | Ligne non couverte par les tests | Écrire des tests pour cette ligne |
+
+### Exemple — Mutation échappée et correction
+
+```php
+// Code original
+public function isAdult(int $age): bool {
+  return $age >= 18;
+}
+
+// Mutation appliquée par Infection : >= devient >
+// public function isAdult(int $age): bool {
+//   return $age > 18;  ← mutation
+// }
+
+// ❌ Test insuffisant — ne détecte pas la mutation
+public function testIsAdult(): void {
+  $this->assertTrue($this->service->isAdult(25));
+  $this->assertFalse($this->service->isAdult(10));
+}
+
+// ✅ Test correct — teste exactement la limite
+public function testIsAdult(): void {
+  $this->assertTrue($this->service->isAdult(25));
+  $this->assertTrue($this->service->isAdult(18));   // Exactement 18 = adulte
+  $this->assertFalse($this->service->isAdult(17));  // 17 = mineur
+  $this->assertFalse($this->service->isAdult(10));
+}
+```
+
+### Pipeline GitLab CI — Mutation Testing
+
+```yaml
+# .gitlab-ci.yml — mutation testing (stage séparé, optionnel)
+test:mutation:
+  stage: test
+  image: "${PHP_IMAGE}"
+  needs: ["test:unit"]
+  variables:
+    SIMPLETEST_DB: "sqlite://localhost/:memory:"
+  before_script:
+    - composer install --no-progress --prefer-dist --optimize-autoloader
+    - cp phpunit.xml.dist phpunit.xml
+  script:
+    - docker compose exec php vendor/bin/infection
+        --min-msi=60
+        --threads=4
+        --no-progress
+  artifacts:
+    paths:
+      - infection.log
+      - infection.html
+    when: always
+    expire_in: 1 week
+  allow_failure: true  # Ne bloque pas le pipeline — indicateur de qualité
+  when: manual         # Déclenché manuellement (coûteux en temps)
+  only:
+    - main
+    - merge_requests
+```
+
+> **Note :** Infection nécessite que PHPUnit ait généré une couverture de code (Xdebug ou PCOV activé). S'assurer que `php -d pcov.enabled=1` est utilisé pour la couverture, et qu'`infection.json5` pointe vers le bon `phpunit.xml`.
