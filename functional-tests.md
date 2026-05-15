@@ -22,9 +22,11 @@ use Drupal\Tests\BrowserTestBase;
 use Drupal\Tests\node\Traits\NodeCreationTrait;
 use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
 
-/**
- * @group mon_module
- */
+// ❌ D8/D9/D10 (annotations docblock — supprimées dans PHPUnit 11)
+// /** @group mon_module */
+
+// ✅ D11 / PHPUnit 11 (attributs PHP — standard)
+#[\PHPUnit\Framework\Attributes\Group('mon_module')]
 final class MonPageTest extends BrowserTestBase {
   use NodeCreationTrait;
   use ContentTypeCreationTrait;
@@ -302,11 +304,9 @@ $file = $this->createFile(['filename' => 'test.txt', 'uri' => 'public://test.txt
 ## Tester les Permissions par Rôle
 
 ```php
-/**
- * Vérifie l'accès pour plusieurs rôles en une seule méthode.
- *
- * @dataProvider rolesProvider
- */
+// ❌ D10- : /** @dataProvider rolesProvider */
+// ✅ D11 / PHPUnit 11
+#[\PHPUnit\Framework\Attributes\DataProvider('rolesProvider')]
 public function testAccesSelonRole(array $permissions, int $expected_code): void {
   $user = empty($permissions)
     ? $this->drupalCreateUser()  // Utilisateur sans permission spéciale

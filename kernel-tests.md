@@ -24,9 +24,11 @@ use Drupal\KernelTests\KernelTestBase;
 use Drupal\node\Entity\Node;
 use Drupal\node\Entity\NodeType;
 
-/**
- * @group mon_module
- */
+// ❌ D8/D9/D10 (annotations docblock — supprimées dans PHPUnit 11)
+// /** @group mon_module */
+
+// ✅ D11 / PHPUnit 11 (attributs PHP — standard)
+#[\PHPUnit\Framework\Attributes\Group('mon_module')]
 final class ArticleServiceKernelTest extends KernelTestBase {
 
   /**

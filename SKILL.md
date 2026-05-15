@@ -1,6 +1,6 @@
 ---
 name: drupal-testing
-description: Use when writing PHPUnit tests for Drupal modules (Unit, Kernel, Functional, FunctionalJavascript), configuring phpunit.xml for Drupal, mocking services with UnitTestCase, testing Entity API or Config API with KernelTestBase, simulating user navigation with BrowserTestBase, testing AJAX with WebDriverTestBase, or setting up CI/CD pipelines for Drupal automated testing in Drupal 8-11+
+description: Use when writing PHPUnit tests for Drupal modules (Unit, Kernel, Functional, FunctionalJavascript), configuring phpunit.xml for Drupal, mocking services with UnitTestCase, testing Entity API or Config API with KernelTestBase, simulating user navigation with BrowserTestBase, testing AJAX with WebDriverTestBase, setting up CI/CD pipelines for Drupal automated testing in Drupal 8-11+, running PHPStan/phpcs/Rector static analysis on Drupal code, or testing an existing Drupal site without reinstalling using Drupal Test Traits (DTT)
 ---
 
 # Drupal Testing — Référence Complète
@@ -59,12 +59,22 @@ Référentiel complet des tests PHPUnit pour Drupal 8-11+ : infrastructure, 4 ty
 | Tester un nœud multilingue traduit | Kernel — `addTranslation()` | [advanced-scenarios.md](advanced-scenarios.md) |
 | Tester une migration Drupal | Kernel — `MigrateTestBase` + `executeMigration()` | [advanced-scenarios.md](advanced-scenarios.md) |
 | Tester un endpoint REST (POST/PATCH/DELETE) | Functional avec Basic Auth | [advanced-scenarios.md](advanced-scenarios.md) |
+| **Tester un endpoint JSON:API** | **Functional — `BrowserTestBase` + assertions JSON** | **[advanced-scenarios.md](advanced-scenarios.md)** |
 | Tester un `Drupal.behavior` JS en isolation | Jest — mock de `once` et `Drupal` global | [advanced-scenarios.md](advanced-scenarios.md) |
 | Tests E2E JavaScript style Drupal core | Nightwatch.js | [advanced-scenarios.md](advanced-scenarios.md) |
+| Tests BDD comportementaux (Gherkin) | Behat + DrupalExtension | [infrastructure.md](infrastructure.md) |
+| Scénario Given/When/Then pour un formulaire | Behat + MinkExtension | [infrastructure.md](infrastructure.md) |
 | Configurer PHPUnit pour Drupal | `phpunit.xml` | [infrastructure.md](infrastructure.md) |
-| Lancer les tests avec DDEV | `ddev exec vendor/bin/phpunit` | [infrastructure.md](infrastructure.md) |
+| Lancer les tests avec Docker Compose | `docker compose exec php vendor/bin/phpunit` | [infrastructure.md](infrastructure.md) |
 | Mettre en place le TDD | RED → GREEN → REFACTOR | [tdd-cicd.md](tdd-cicd.md) |
 | Automatiser les tests en CI/CD | GitHub Actions / GitLab CI | [tdd-cicd.md](tdd-cicd.md) |
+| **Pipeline GitLab CI complet (validate + test + coverage)** | **Stage validate→test→coverage avec seuil 70%** | **[tdd-cicd.md](tdd-cicd.md)** |
+| **PHPStan niveau 6 pour analyse statique** | **`mglaman/phpstan-drupal` + rules Drupal** | **[static-analysis.md](static-analysis.md)** |
+| **phpcs avec standard Drupal (2 espaces)** | **`drupal/coder` + `phpcs.xml` configuré** | **[static-analysis.md](static-analysis.md)** |
+| **Rector pour corriger les dépréciations** | **`palantirnet/drupal-rector` — dry-run en CI** | **[static-analysis.md](static-analysis.md)** |
+| **Scanner les dépréciations avant upgrade** | **`mglaman/drupal-check`** | **[static-analysis.md](static-analysis.md)** |
+| **Tests sur site existant (pas de réinstall)** | **DTT `ExistingSiteBase` — 10× plus rapide** | **[drupal-test-traits.md](drupal-test-traits.md)** |
+| **Smoke tests post-déploiement** | **DTT — teste la vraie DB, la vraie config** | **[drupal-test-traits.md](drupal-test-traits.md)** |
 
 ## Anti-Patterns Critiques
 
@@ -83,11 +93,13 @@ Référentiel complet des tests PHPUnit pour Drupal 8-11+ : infrastructure, 4 ty
 
 | Feature | D8 | D9 | D10 | D11 |
 |---------|----|----|-----|-----|
-| PHPUnit version | 6.x | 9.x | 10.x | 10.x |
+| PHPUnit version | 6.x | 9.x | 10.x | **11.x** |
 | `UnitTestCase` | ✅ | ✅ | ✅ | ✅ |
 | `KernelTestBase` | ✅ | ✅ | ✅ | ✅ |
 | `BrowserTestBase` | ✅ | ✅ | ✅ | ✅ |
 | `WebDriverTestBase` | ✅ | ✅ | ✅ | ✅ |
+| Annotations (`@group`, `@covers`) | ✅ | ✅ | ⚠️ deprecated | ❌ supprimées |
+| Attributs PHP (`#[Group]`, `#[CoversClass]`) | ❌ | ❌ | ✅ partiel | ✅ **standard** |
 | `@group` annotation | ✅ | ✅ | ✅ | ✅ |
 | PHP Attributes pour annotations PHPUnit | ❌ | ❌ | ✅ partiel | ✅ |
 | `drush test:run` | ❌ | ✅ | ✅ | ✅ |
@@ -107,4 +119,7 @@ Référentiel complet des tests PHPUnit pour Drupal 8-11+ : infrastructure, 4 ty
 
 - `drupal-core` — Entity API, Config API (ce que les Kernel tests testent)
 - `drupal-config` — Config Management (tester la config via KernelTest)
-- `drupal-tooling` — DDEV, Drush, commandes de lancement des tests
+- `drush` — `drush test:run`, commandes de lancement
+- `docker-compose` — `docker compose exec php vendor/bin/phpunit`, ChromeDriver add-on
+- `rector` — refactoring automatique PHP/Drupal (complémente [static-analysis.md](static-analysis.md))
+- `xdebug` — step debug et couverture de code pour PHPUnit

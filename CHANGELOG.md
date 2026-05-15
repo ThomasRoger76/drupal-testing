@@ -19,7 +19,7 @@
 - Structure dossiers tests dans un module (Unit/Kernel/Functional/FunctionalJavascript)
 - `phpunit.xml` complet (SIMPLETEST_BASE_URL, SIMPLETEST_DB, BROWSERTEST_OUTPUT_DIRECTORY, MINK_DRIVER_ARGS_WEBDRIVER)
 - Toutes les commandes `vendor/bin/phpunit` (--testsuite, --group, --filter, --coverage-*)
-- Setup DDEV : DB de test, config, ChromeDriver via ddev-selenium-standalone-chrome
+- Setup DDEV : DB de test, config, ChromeDriver via docker compose exec php-selenium-standalone-chrome
 - Variables d'environnement référence
 - Annotations PHPUnit (@group, @covers) + PHP Attributes (D10+)
 - Tableau troubleshooting infrastructure
@@ -55,7 +55,7 @@
 - Helpers : `clickLink()`, `getSession()`, `drupalCreateNode()`, `drupalCreateUser()` avec DataProvider
 
 **`javascript-tests.md`**
-- Prérequis ChromeDriver avec DDEV (ddev-selenium-standalone-chrome)
+- Prérequis ChromeDriver avec DDEV (docker compose exec php-selenium-standalone-chrome)
 - Structure `WebDriverTestBase`
 - Méthodes d'attente AJAX : `waitForElement()`, `waitForText()`, `waitForElementRemoved()`, `assertWaitOnAjaxRequest()`
 - Exemple avec vs sans sleep (bon vs mauvais pattern)

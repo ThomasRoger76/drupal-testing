@@ -12,15 +12,15 @@
 
 ---
 
-## Prérequis — ChromeDriver avec DDEV
+## Prérequis — ChromeDriver avec Docker Compose
 
 ```bash
 # Installer Selenium Standalone Chrome
-ddev get ddev/ddev-selenium-standalone-chrome
-ddev restart
+# module non nécessaire avec Docker Compose
+docker compose restart php
 
 # Vérifier que le service tourne
-ddev describe | grep selenium
+docker compose ps | grep selenium
 ```
 
 ```xml
@@ -40,9 +40,11 @@ namespace Drupal\Tests\mon_module\FunctionalJavascript;
 
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
 
-/**
- * @group mon_module
- */
+// ❌ D8/D9/D10 (annotations docblock — supprimées dans PHPUnit 11)
+// /** @group mon_module */
+
+// ✅ D11 / PHPUnit 11 (attributs PHP — standard)
+#[\PHPUnit\Framework\Attributes\Group('mon_module')]
 final class MonAjaxTest extends WebDriverTestBase {
 
   protected static $modules = ['mon_module', 'node'];
@@ -247,7 +249,7 @@ protected function onNotSuccessfulTest(\Throwable $t): void {
 
 | Erreur | Cause | Solution |
 |--------|-------|---------|
-| `Connection refused to ChromeDriver` | Selenium non démarré | `ddev restart` après installation de selenium |
+| `Connection refused to ChromeDriver` | Selenium non démarré | `docker compose exec php restart` après installation de selenium |
 | Test flaky (passe/échoue aléatoirement) | `sleep()` ou timing non contrôlé | Remplacer par `waitForElement()` |
 | `Element not found` immédiatement | Pas d'attente après action AJAX | `assertWaitOnAjaxRequest()` après chaque action |
 | Screenshot vide | URL de base incorrecte | Vérifier `SIMPLETEST_BASE_URL` dans phpunit.xml |

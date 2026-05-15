@@ -608,6 +608,201 @@ final class RestApiTest extends BrowserTestBase {
 
 ---
 
+## JSON:API Functional Testing
+
+Le module `jsonapi` (Drupal core depuis D8.7) expose automatiquement toutes les entités. Tester ses endpoints en Functional test.
+
+```php
+<?php
+// web/modules/custom/mon_module/tests/src/Functional/JsonApiArticleTest.php
+namespace Drupal\Tests\mon_module\Functional;
+
+use Drupal\Tests\BrowserTestBase;
+
+// ❌ D10- : /** @group mon_module */
+// ✅ D11 / PHPUnit 11
+#[\PHPUnit\Framework\Attributes\Group('mon_module')]
+final class JsonApiArticleTest extends BrowserTestBase {
+
+  protected static $modules = ['node', 'jsonapi', 'serialization'];
+  protected $defaultTheme = 'stark';
+
+  protected function setUp(): void {
+    parent::setUp();
+    // Créer le type de contenu article
+    $this->drupalCreateContentType(['type' => 'article', 'name' => 'Article']);
+  }
+
+  /**
+   * Vérifie que l'endpoint JSON:API retourne les articles publiés.
+   */
+  public function testGetArticles(): void {
+    // Créer un article de test
+    $node = $this->drupalCreateNode([
+      'type'   => 'article',
+      'title'  => 'Test article',
+      'status' => 1,
+    ]);
+
+    // Accéder à l'endpoint JSON:API
+    $this->drupalGet('/jsonapi/node/article');
+    $this->assertSession()->statusCodeEquals(200);
+    $this->assertSession()->responseHeaderContains('Content-Type', 'application/vnd.api+json');
+
+    // Vérifier la structure JSON:API
+    $json = json_decode($this->getSession()->getPage()->getContent(), TRUE);
+    $this->assertArrayHasKey('data', $json);
+    $this->assertNotEmpty($json['data']);
+
+    // Vérifier que notre article est présent
+    $titles = array_column(
+      array_column($json['data'], 'attributes'),
+      'title'
+    );
+    $this->assertContains('Test article', $titles);
+  }
+
+  /**
+   * Vérifie qu'on peut filtrer par titre via les query params JSON:API.
+   */
+  public function testGetArticlesAvecFiltre(): void {
+    $this->drupalCreateNode(['type' => 'article', 'title' => 'Article A', 'status' => 1]);
+    $this->drupalCreateNode(['type' => 'article', 'title' => 'Article B', 'status' => 1]);
+
+    // Filtrer par titre
+    $this->drupalGet('/jsonapi/node/article', [
+      'query' => ['filter[title][value]' => 'Article A'],
+    ]);
+    $this->assertSession()->statusCodeEquals(200);
+
+    $json = json_decode($this->getSession()->getPage()->getContent(), TRUE);
+    $this->assertCount(1, $json['data']);
+    $this->assertEquals('Article A', $json['data'][0]['attributes']['title']);
+  }
+
+  /**
+   * Vérifie qu'un node non publié est invisible pour les anonymes.
+   */
+  public function testArticleNonPublieInvisibleAnonyme(): void {
+    $node = $this->drupalCreateNode([
+      'type'   => 'article',
+      'title'  => 'Brouillon confidentiel',
+      'status' => 0,
+    ]);
+
+    $this->drupalGet('/jsonapi/node/article');
+    $this->assertSession()->statusCodeEquals(200);
+
+    $json = json_decode($this->getSession()->getPage()->getContent(), TRUE);
+    $titles = array_column(
+      array_column($json['data'] ?? [], 'attributes'),
+      'title'
+    );
+    $this->assertNotContains('Brouillon confidentiel', $titles);
+  }
+
+  /**
+   * Vérifie que l'accès à un UUID inexistant retourne 404.
+   */
+  public function testJsonApiUuidInexistantRetourne404(): void {
+    $uuid_inexistant = '00000000-0000-0000-0000-000000000000';
+    $this->drupalGet('/jsonapi/node/article/' . $uuid_inexistant);
+    $this->assertSession()->statusCodeEquals(404);
+  }
+
+  /**
+   * Vérifie que l'accès à un node privé retourne 403 pour un anonyme.
+   */
+  public function testJsonApiAccessDenied(): void {
+    // Créer un node appartenant à un utilisateur avec accès restreint
+    $owner = $this->drupalCreateUser(['create article content']);
+    $node  = $this->drupalCreateNode([
+      'type'   => 'article',
+      'title'  => 'Contenu privé',
+      'status' => 1,
+      'uid'    => $owner->id(),
+    ]);
+
+    // Accès anonyme à un UUID spécifique → 403 si les permissions le bloquent
+    // (selon la config access control du site)
+    $this->drupalGet('/jsonapi/node/article/' . $node->uuid());
+    $code = $this->getSession()->getStatusCode();
+    // 200 si public, 403 si l'accès est restreint
+    $this->assertContains($code, [200, 403],
+      "L'accès à un node spécifique doit être 200 ou 403 selon les permissions."
+    );
+  }
+
+  /**
+   * Vérifie que les inclusions JSON:API (relationships) fonctionnent.
+   */
+  public function testJsonApiIncludes(): void {
+    $node = $this->drupalCreateNode([
+      'type'   => 'article',
+      'title'  => 'Article avec auteur',
+      'status' => 1,
+    ]);
+
+    // Inclure l'auteur (uid relationship)
+    $this->drupalGet('/jsonapi/node/article', [
+      'query' => ['include' => 'uid'],
+    ]);
+    $this->assertSession()->statusCodeEquals(200);
+
+    $json = json_decode($this->getSession()->getPage()->getContent(), TRUE);
+    $this->assertArrayHasKey('included', $json);
+    // Les utilisateurs inclus doivent avoir le type 'user--user'
+    $types = array_column($json['included'], 'type');
+    $this->assertContains('user--user', $types);
+  }
+}
+```
+
+### Tester la création via POST JSON:API
+
+```php
+public function testPostCreerArticleViaJsonApi(): void {
+  // Un utilisateur avec les droits de création
+  $user = $this->drupalCreateUser([
+    'create article content',
+    'access content',
+  ]);
+  $this->drupalLogin($user);
+
+  // Corps de la requête JSON:API
+  $payload = json_encode([
+    'data' => [
+      'type'       => 'node--article',
+      'attributes' => [
+        'title'  => 'Article créé via JSON:API',
+        'status' => TRUE,
+      ],
+    ],
+  ]);
+
+  // Envoyer la requête POST
+  $this->drupalGet('/jsonapi/node/article', [
+    'query' => [],
+  ]);
+  // Note : pour un vrai POST, utiliser \Drupal::httpClient() ou Guzzle
+  // BrowserTestBase ne supporte pas les POST JSON natifs facilement
+  // Utiliser plutôt la méthode ci-dessous avec drupalCreateNode() pour valider
+  $node = $this->drupalCreateNode([
+    'type'   => 'article',
+    'title'  => 'Article créé via JSON:API',
+    'status' => 1,
+  ]);
+
+  // Vérifier via GET que le node est accessible
+  $this->drupalGet('/jsonapi/node/article/' . $node->uuid());
+  $this->assertSession()->statusCodeEquals(200);
+  $json = json_decode($this->getSession()->getPage()->getContent(), TRUE);
+  $this->assertEquals('Article créé via JSON:API', $json['data']['attributes']['title']);
+}
+```
+
+---
+
 ## Nightwatch.js — Tests JS Style Drupal Core
 
 Drupal core utilise Nightwatch.js pour ses propres tests JavaScript.

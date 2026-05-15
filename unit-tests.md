@@ -21,10 +21,15 @@ namespace Drupal\Tests\mon_module\Unit;
 use Drupal\mon_module\Service\PrixCalculator;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @group mon_module
- * @coversDefaultClass \Drupal\mon_module\Service\PrixCalculator
- */
+// ❌ D8/D9/D10 (annotations docblock — supprimées dans PHPUnit 11)
+// /**
+//  * @group mon_module
+//  * @coversDefaultClass \Drupal\mon_module\Service\PrixCalculator
+//  */
+
+// ✅ D11 / PHPUnit 11 (attributs PHP — standard)
+#[\PHPUnit\Framework\Attributes\Group('mon_module')]
+#[\PHPUnit\Framework\Attributes\CoversClass(PrixCalculator::class)]
 final class PrixCalculatorTest extends UnitTestCase {
 
   private PrixCalculator $calculator;
@@ -64,9 +69,13 @@ use Drupal\mon_module\Service\ArticleService;
 use Drupal\node\NodeInterface;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @group mon_module
- */
+// ❌ D8/D9/D10 (annotations docblock — supprimées dans PHPUnit 11)
+// /**
+//  * @group mon_module
+//  */
+
+// ✅ D11 / PHPUnit 11 (attributs PHP — standard)
+#[\PHPUnit\Framework\Attributes\Group('mon_module')]
 final class ArticleServiceTest extends UnitTestCase {
 
   private ArticleService $service;
@@ -156,10 +165,15 @@ $mock->expects($this->never())->method('delete');
 ## Data Providers — Tester Plusieurs Cas
 
 ```php
-/**
- * @dataProvider prixProvider
- * @covers ::calculer
- */
+// ❌ D8/D9/D10 (annotations docblock — supprimées dans PHPUnit 11)
+// /**
+//  * @dataProvider prixProvider
+//  * @covers ::calculer
+//  */
+
+// ✅ D11 / PHPUnit 11 (attributs PHP — standard)
+#[\PHPUnit\Framework\Attributes\DataProvider('prixProvider')]
+#[\PHPUnit\Framework\Attributes\CoversMethod('calculer')]
 public function testCalculerPrix(float $base, float $taux, float $expected): void {
   $this->assertEquals($expected, $this->calculator->calculer($base, $taux));
 }
@@ -178,12 +192,6 @@ public static function prixProvider(): array {
     'petits montants'            => [1.0,   0.05, 1.05],
   ];
 }
-```
-
-**PHPUnit 10 (D10+) :** utiliser l'attribut PHP :
-```php
-#[\PHPUnit\Framework\Attributes\DataProvider('prixProvider')]
-public function testCalculerPrix(float $base, float $taux, float $expected): void {
 ```
 
 ---
@@ -272,16 +280,21 @@ namespace Drupal\Tests\mon_module\Unit\DTO;
 use Drupal\mon_module\DTO\ItemDTO;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @group mon_module
- * @coversDefaultClass \Drupal\mon_module\DTO\ItemDTO
- */
+// ❌ D8/D9/D10 (annotations docblock — supprimées dans PHPUnit 11)
+// /**
+//  * @group mon_module
+//  * @coversDefaultClass \Drupal\mon_module\DTO\ItemDTO
+//  */
+
+// ✅ D11 / PHPUnit 11 (attributs PHP — standard)
+#[\PHPUnit\Framework\Attributes\Group('mon_module')]
+#[\PHPUnit\Framework\Attributes\CoversClass(ItemDTO::class)]
 final class ItemDTOTest extends UnitTestCase {
 
-  /**
-   * @covers ::fromArray
-   * @dataProvider itemProvider
-   */
+  // ❌ D10- : /** @covers ::fromArray @dataProvider itemProvider */
+  // ✅ D11 / PHPUnit 11
+  #[\PHPUnit\Framework\Attributes\DataProvider('itemProvider')]
+  #[\PHPUnit\Framework\Attributes\CoversMethod('fromArray')]
   public function testFromArray(array $data, string $expectedId, bool $expectedValid): void {
     $dto = ItemDTO::fromArray($data);
     $this->assertEquals($expectedId, $dto->externalId);
@@ -310,9 +323,11 @@ use Drupal\mon_module\DTO\ItemDTO;
 use Drupal\mon_module\Validator\ItemValidator;
 use Drupal\Tests\UnitTestCase;
 
-/**
- * @group mon_module
- */
+// ❌ D8/D9/D10 (annotations docblock — supprimées dans PHPUnit 11)
+// /** @group mon_module */
+
+// ✅ D11 / PHPUnit 11 (attributs PHP — standard)
+#[\PHPUnit\Framework\Attributes\Group('mon_module')]
 final class ItemValidatorTest extends UnitTestCase {
 
   private ItemValidator $validator;
