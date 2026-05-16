@@ -2,6 +2,16 @@
 
 ---
 
+## v1.1 — 2026-05-16
+
+**Bug bash corrigé :**
+- `tdd-cicd.md` stage coverage : `docker-php-ext-enable pcov || pecl install pcov && docker-php-ext-enable pcov || true` → priorité d'opérateurs bash incorrecte en cas de chaîne `||...&&`. Corrigé en `docker-php-ext-enable pcov 2>/dev/null || (pecl install pcov && docker-php-ext-enable pcov) || true` (parenthèses pour grouper correctement le fallback)
+
+**lessons.md :**
+- Date `2026-05-14` ajoutée sur la dernière leçon "Module d'import/synchro API" — cohérence de format avec les autres entrées
+
+---
+
 ## v1.0 — 2026-05-14
 
 **Création initiale**
