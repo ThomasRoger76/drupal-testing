@@ -100,7 +100,7 @@ Après chaque bug de test résolu :
 - **Prévention :** Dans les Kernel tests, `'uid' => 0` est le raccourci pour les tests sans gestion d'utilisateurs
 
 
-### Module d'import/synchro API sans aucun test — Régression silencieuse
+### 2026-05-14 — Module d'import/synchro API sans aucun test — Régression silencieuse
 - **Symptôme :** Un changement dans la logique de validation (dates, statuts) casse silencieusement l'import — aucun feedback
 - **Cause :** Logique de validation PHP pure dans des classes sans aucun Unit Test
 - **Correct :** Les classes de validation et les DTOs sont parfaits pour les Unit Tests — aucune dépendance Drupal nécessaire

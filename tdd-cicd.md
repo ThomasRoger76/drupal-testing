@@ -372,7 +372,8 @@ coverage:
     - composer install --no-progress --prefer-dist --optimize-autoloader
     - cp phpunit.xml.dist phpunit.xml
     # Activer PCOV (plus rapide que Xdebug pour la couverture)
-    - docker-php-ext-enable pcov 2>/dev/null || pecl install pcov && docker-php-ext-enable pcov || true
+    # Les parenthèses groupent correctement les commandes de fallback
+    - docker-php-ext-enable pcov 2>/dev/null || (pecl install pcov && docker-php-ext-enable pcov) || true
   script:
     # Couverture Unit + Kernel avec PCOV
     - php -d pcov.enabled=1 -d pcov.directory=web/modules/custom \
