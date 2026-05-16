@@ -98,10 +98,12 @@ Référentiel complet des tests PHPUnit pour Drupal 8-11+ : infrastructure, 4 ty
 | `KernelTestBase` | ✅ | ✅ | ✅ | ✅ |
 | `BrowserTestBase` | ✅ | ✅ | ✅ | ✅ |
 | `WebDriverTestBase` | ✅ | ✅ | ✅ | ✅ |
-| Annotations (`@group`, `@covers`) | ✅ | ✅ | ⚠️ deprecated | ❌ supprimées |
-| Attributs PHP (`#[Group]`, `#[CoversClass]`) | ❌ | ❌ | ✅ partiel | ✅ **standard** |
-| `@group` annotation | ✅ | ✅ | ✅ | ✅ |
-| PHP Attributes pour annotations PHPUnit | ❌ | ❌ | ✅ partiel | ✅ |
+| `@covers` annotation | ✅ | ✅ | ⚠️ deprecated | ❌ supprimée → `#[CoversClass]` |
+| `@group` annotation | ✅ | ✅ | ✅ | ⚠️ tolérée (legacy) → `#[Group]` recommandé |
+| `#[Group]` attribute PHP | ❌ | ❌ | ✅ partiel | ✅ **standard** |
+| `#[CoversClass]` attribute PHP | ❌ | ❌ | ✅ partiel | ✅ **standard** |
+| `#[RequiresPhp('8.3')]` attribute | ❌ | ❌ | ❌ | ✅ PHPUnit 11 |
+| `#[RequiresPhpExtension('xdebug')]` attribute | ❌ | ❌ | ❌ | ✅ PHPUnit 11 |
 | `drush test:run` | ❌ | ✅ | ✅ | ✅ |
 | Nightwatch.js (JS tests core) | ✅ | ✅ | ✅ | ✅ |
 | `createMock()` (PHPUnit) | ✅ | ✅ | ✅ | ✅ |
