@@ -66,6 +66,16 @@ Référentiel complet des tests PHPUnit pour Drupal 8-11+ : infrastructure, 4 ty
 | Scénario Given/When/Then pour un formulaire | Behat + MinkExtension | [infrastructure.md](infrastructure.md) |
 | Configurer PHPUnit pour Drupal | `phpunit.xml` | [infrastructure.md](infrastructure.md) |
 | Lancer les tests avec Docker Compose | `docker compose exec php vendor/bin/phpunit` | [infrastructure.md](infrastructure.md) |
+| **Fixtures et données de test réutilisables** | Traits custom `NodeCreationTrait`, `UserCreationTrait` + méthode `setUp` | [advanced-scenarios.md](advanced-scenarios.md) |
+| **Tester un JSON:API endpoint (GET/POST)** | `BrowserTestBase` + `$this->drupalGet('/jsonapi/node/article', ['query' => ['filter[status]' => 1]])` + `assertSession()->statusCodeEquals(200)` | [advanced-scenarios.md](advanced-scenarios.md) |
+| **Coverage HTML — rapport avec seuil** | `phpunit --coverage-html web/coverage --coverage-clover clover.xml` + threshold 70% en CI | [tdd-cicd.md](tdd-cicd.md) |
+| **Tests en parallèle (suite divisée par CI)** | GitLab CI `parallel: 4` + `--testsuite` par groupe | [tdd-cicd.md](tdd-cicd.md) |
+| **Smoke tests post-déploiement en production** | DTT `ExistingSiteBase` — vérifier les pages critiques sans réinstaller | [drupal-test-traits.md](drupal-test-traits.md) |
+| **Tester qu'un hook_cron ne dépasse pas X secondes** | `KernelTestBase` + `$start = microtime(true)` + assertion sur la durée | [advanced-scenarios.md](advanced-scenarios.md) |
+| **Snapshot test — détecter les régressions HTML** | `assertMatchesHtmlSnapshot()` via `drupal/test_snapshot` ou assertion de contenu | [functional-tests.md](functional-tests.md) |
+| **Tester les permissions d'accès JSON:API** | Functional — `drupalLogin($user_without_perm)` puis GET `/jsonapi/node/article` → assert 403 | [advanced-scenarios.md](advanced-scenarios.md) |
+| **Isolation des tests — reset du state entre tests** | `tearDown()` + `$this->container->get('state')->delete('ma_cle')` | [kernel-tests.md](kernel-tests.md) |
+| **Test de régression visuelle (thème)** | BackstopJS ou Percy CI — screenshot avant/après sur les pages clés | [javascript-tests.md](javascript-tests.md) |
 | Mettre en place le TDD | RED → GREEN → REFACTOR | [tdd-cicd.md](tdd-cicd.md) |
 | Automatiser les tests en CI/CD | GitHub Actions / GitLab CI | [tdd-cicd.md](tdd-cicd.md) |
 | **Pipeline GitLab CI complet (validate + test + coverage)** | **Stage validate→test→coverage avec seuil 70%** | **[tdd-cicd.md](tdd-cicd.md)** |
@@ -88,6 +98,10 @@ Référentiel complet des tests PHPUnit pour Drupal 8-11+ : infrastructure, 4 ty
 | `$defaultTheme` non défini en Functional | Toujours déclarer `$defaultTheme = 'stark'` | Erreur à l'exécution |
 | Tester les APIs Drupal core | Tester son propre code | Core est déjà testé |
 | Charger tous les modules dans `$modules` | Charger uniquement ce qui est nécessaire | Tests lents, maintenance difficile |
+| `$this->drupalGet()` sans assert sur le status code | Toujours `$this->assertSession()->statusCodeEquals(200)` | Test silencieux qui passe même sur 404 |
+| Fixtures créées dans le test sans factory méthode | Extraire `createTestNode()` dans un trait réutilisable | Code dupliqué dans chaque test |
+| FunctionalJavascript pour tester du HTML statique | BrowserTestBase suffit — FunctionalJS requiert ChromeDriver et est 10× plus lent | Tests inutilement lents en CI |
+| Pas de couverture de code mesurée en CI | `--coverage-clover` + seuil 70% dans phpunit.xml (`forceCoversAnnotation`) | Régression de coverage invisible |
 
 ## Évolution par Version Majeure
 
