@@ -121,7 +121,7 @@ Référentiel complet des tests PHPUnit pour Drupal 8-11+ : infrastructure, 4 ty
 
 - `drupal-core` — Entity API, Config API (ce que les Kernel tests testent)
 - `drupal-config` — Config Management (tester la config via KernelTest)
-- `drush` — `drush test:run`, commandes de lancement
-- `docker-compose` — `docker compose exec php vendor/bin/phpunit`, ChromeDriver add-on
-- `rector` — refactoring automatique PHP/Drupal (complémente [static-analysis.md](static-analysis.md))
-- `xdebug` — step debug et couverture de code pour PHPUnit
+- `drupal-docker` — `docker compose exec php vendor/bin/phpunit`, ChromeDriver, CI
+- `drupal-deployment` — `drush test:run`, pipeline CI/CD, GitLab/GitHub Actions
+- Rector (`palantirnet/drupal-rector`) — complémente [static-analysis.md](static-analysis.md)
+- Xdebug — step debug et couverture de code pour PHPUnit
